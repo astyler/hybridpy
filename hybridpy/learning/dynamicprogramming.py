@@ -2,8 +2,8 @@ __author__ = 'astyler'
 
 import numpy as np
 from scipy.interpolate import interp1d
-
 from hybridpy.models import vehicles, batteries
+
 
 def compute(trip, controls, soc_states=50, gamma=1.0,
             cost_function=lambda fuel_rate, power, duration: fuel_rate * duration):
