@@ -44,3 +44,7 @@ class Car(Vehicle):
             power = regen_efficiency * f_motor * speed_init
 
         return power + offset
+
+    # TODO: add in a real power -> fuel mapping
+    def compute_fuel_rate(self, power_demand):
+        return power_demand/10000.0

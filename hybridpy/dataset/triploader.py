@@ -2,22 +2,30 @@ __author__ = 'astyler'
 import pandas as pd
 import numpy as np
 import math
-
+import osmapping
+from scipy.signal import butter, filtfilt
 
 def load(fname):
     trip = pd.read_csv(fname)
-    trip['ElapsedSeconds'] = np.cumsum(trip.PeriodMS / 1000.0)
-    trip.ElapsedSeconds -= trip.ElapsedSeconds[0]
+    elapsed = np.cumsum(trip.PeriodMS / 1000.0)
+    elapsed -= elapsed[0]
+    trip['ElapsedSeconds'] = elapsed
 
-    headings = []
-    for idx in xrange(len(trip) - 1):
-        here = trip.iloc[idx]
-        there = trip.iloc[idx + 1]
-        headings.append(compute_heading(lat1=here.Latitude, lat2=there.Latitude, lon1=here.Longitude, lon2=there.Longitude))
+    # smooth noisy elevation measurements
+    b, a = butter(4, 0.05)
+    trip.Elevation = filtfilt(b, a, trip.Elevation)
 
+    locations = trip[['Latitude', 'Longitude']].values
+
+    # add heading
+    headings = [compute_heading(lat1=here[0], lat2=there[0], lon1=here[1], lon2=there[1]) for here, there in zip(locations[0:-1], locations[1:])]
     headings.append(0)
-    trip.Heading = headings
+    trip['Heading'] = headings
 
+    # add gradient
+    planar_distances = [osmapping.haversine(here, there)+1.0 for here, there in zip(locations[0:-1], locations[1:])]
+    trip['Gradient'] = trip.Elevation.diff() / ([1.0] + planar_distances)
+    trip.loc[0, 'Gradient'] = trip.loc[1, 'Gradient']
     return trip
 
 
