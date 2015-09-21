@@ -17,8 +17,8 @@ class Car(Vehicle):
     def get_power(self, speed_init, acceleration, elevation, gradient, duration, outside_temperature=23):
         a_gravity = 9.81
         offset = 240
-        ineff = 1
-        regen_efficiency = 0.45
+        ineff = 0.95
+        regen_efficiency = 0.84
         pressure = 101325 * math.pow((1 - ((0.0065 * elevation) / 288.15)), ((a_gravity * 0.0289) / (8.314 * 0.0065)))
         rho = (pressure * 0.0289) / (8.314 * outside_temperature)
         air_resistance_coefficient = 0.5 * rho * self.cross_area * self.drag_coefficient
@@ -39,9 +39,9 @@ class Car(Vehicle):
         f_motor = f_net + f_resistance
 
         if f_motor > 0:
-            power = f_motor * speed_init * ineff
+            power = f_motor * speed_init / ineff
         else:
-            power = regen_efficiency * f_motor * speed_init
+            power = f_motor * speed_init * ineff * regen_efficiency
 
         return power + offset
 

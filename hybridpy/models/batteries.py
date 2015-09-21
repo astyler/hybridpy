@@ -12,7 +12,7 @@ class IdealBattery(object):
         return (- power * duration / 3600.0) / self.max_energy
 
 class QuadraticBattery(object):
-    def __init__(self, u_min=3.25, u_max=3.9, amphours=50, cells=50, resistance=2.1/1000, name='quadratic'):
+    def __init__(self, u_min=3.25, u_max=3.9, amphours=5, cells=60, resistance=2.1/1000, name='quadratic'):
         self.u_max = cells*u_max
         self.u_min = cells*u_min
         self.q_max = amphours

@@ -10,6 +10,9 @@ def load(fname):
     elapsed = np.cumsum(trip.PeriodMS / 1000.0)
     elapsed -= elapsed[0]
     trip['ElapsedSeconds'] = elapsed
+    # smooth speed
+    b, a = butter(2, 0.6)
+    trip.Speed = filtfilt(b, a, trip.Speed)
 
     # smooth noisy elevation measurements
     b, a = butter(4, 0.05)
