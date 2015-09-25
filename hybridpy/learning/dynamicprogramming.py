@@ -7,10 +7,9 @@ from hybridpy.models import vehicles, batteries
 
 
 def compute(trip, controls, soc_states=50, gamma=1.0,
-            cost_function=lambda fuel_rate, power, duration: fuel_rate * duration):
-    vehicle = vehicles.Car()
-    battery = batteries.QuadraticBattery()
-
+            cost_function=lambda fuel_rate, power, duration: fuel_rate * duration, vehicle=vehicles.Car(),
+            battery=batteries.QuadraticBattery()):
+    
     socs = np.linspace(0, 1, num=soc_states)
     time_states = len(trip)
 
