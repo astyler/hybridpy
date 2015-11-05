@@ -2,13 +2,22 @@ __author__ = 'astyler'
 
 import numpy as np
 from scipy.interpolate import interp1d
-
 from hybridpy.models import vehicles, batteries
 
 
 def compute(trip, controls, soc_states=50, gamma=1.0,
             cost_function=lambda fuel_rate, power, duration: fuel_rate * duration, vehicle=vehicles.Car(),
             battery=batteries.QuadraticBattery()):
+    """ Computes the value function and q function for a given trip and optimization parameters
+    :param trip: Trip dataframe containing speed, acceleration, elevation, and gradient features
+    :param controls: discrete list of allowed controls for the engine power output
+    :param soc_states: scalar number of state of charge states (resolution)
+    :param gamma: discount factor in bellman equation
+    :param cost_function: cost function for input arguments: fuel_rate, power, duration
+    :param vehicle: vehicle model to generate power outputs from speed, acceleration, gradient
+    :param battery: battery model to compute SOC change for given power loads
+    :return: value_function, q_function, power list, duration list
+    """
     
     socs = np.linspace(0, 1, num=soc_states)
     time_states = len(trip)
