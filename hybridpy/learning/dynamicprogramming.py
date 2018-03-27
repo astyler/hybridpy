@@ -31,8 +31,8 @@ def compute(trip, controls, soc_states=50, gamma=1.0,
     for t in xrange(0, time_states - 1):
         state = trip.iloc[t]
         duration = trip.ElapsedSeconds.iloc[t + 1] - state.ElapsedSeconds
-        power = vehicle.get_power(speed_init=state.Speed, acceleration=state.Acceleration, elevation=state.Elevation,
-                                  gradient=state.Gradient, duration=duration)
+        power = vehicle.get_power(speed_init=state.SpeedFilt, acceleration=state.Acceleration, elevation=state.ElevationFilt,
+                                  gradient=state.GradientRaw, duration=duration)
         powers.append(power)
         durations.append(duration)
 
@@ -40,24 +40,24 @@ def compute(trip, controls, soc_states=50, gamma=1.0,
 
     # backprop djikstras to compute value function
     for t in xrange(time_states - 2, -1, -1):
-        next_value_slice = interp1d(socs, value_function[t + 1], bounds_error=False)
+        next_value_slice = interp1d(socs, value_function[t + 1])
         power_demand = powers[t]
         duration = durations[t]
 
         def cost_to_go(soc):
             if soc < 0:
-                return np.inf
+                return np.nan # can't pull energy when battery empty, return inf ctg
             elif soc > 1:
-                return value_function[t + 1][-1]
+                return value_function[t + 1][-1] # can't charge above max, return value at max
             else:
-                return next_value_slice(soc)
+                return next_value_slice(soc) # return cost to go of next slice
 
         for (i, soc) in enumerate(socs):
-            # control is power supplied from the ICE
+            # control is power supplied from the ICE, battery makes up the difference
             costs_to_go = [cost_to_go(soc + battery.compute_delta_soc(soc, power_demand - control, duration)) for
                            control in controls]
             q_function[t][i] = [
-                cost_function(vehicle.compute_fuel_rate(control), power_demand - control, duration) + gamma * ctg for
+                cost_function(vehicle.compute_fuel_rate(control), power_demand - control, duration) + (gamma * ctg) for
                 ctg, control in zip(costs_to_go, controls)]
 
         value_function[t] = [np.nanmin(q) for q in q_function[t]]

@@ -1,7 +1,8 @@
 __author__ = 'astyler'
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import NearestNeighbors
-
+import math
+import numpy as np
 
 class TripPredictor(object):
     def __init__(self, trip, features, feature_weights):
@@ -24,9 +25,10 @@ class TripPredictor(object):
 
 class EnsemblePredictor(object):
     def __init__(self, trip_list,
-                 features=['Latitude', 'Longitude', 'Bearing', 'Speed', 'Acceleration', 'Power', 'TotalEnergyUsed'],
-                 feature_weights=[1, 1, 0.5, 0.1, 0, 0, 0.2]):
+                 features=['Latitude', 'Longitude', 'HeadingCosF', 'HeadingSinF', 'SpeedFilt', 'Acceleration', 'Power', 'TotalEnergyUsed'],
+                 feature_weights=[1, 1, 0.25, 0.25, 0.1, 0, 0, 0.2]):
         self.ensemble = []
+        self.ensemble_weights = []
         self.features = features
         self.feature_weights = feature_weights
 
@@ -34,11 +36,26 @@ class EnsemblePredictor(object):
             self.add_trip(trip)
 
     def add_trip(self, trip):
+        self.ensemble_weights = np.append(self.ensemble_weights, 1.0)
         self.ensemble.append(TripPredictor(trip=trip, features=self.features, feature_weights=self.feature_weights))
 
-    def predict(self, query_point):
+    def predict(self, query_point, sigma=1e-4, update_ensemble_weighting=False):
         predictions = []
-        for predictor in self.ensemble:
-            predictions.append(predictor.predict(query_point))
-        return predictions
+        for weight, predictor in zip(self.ensemble_weights, self.ensemble):
+            # convolve distance with gaussian kernel??  how wide?
+            # convolve with ensemble weight
+            distance, prediction = predictor.predict(query_point)
+
+            predictions.append((self.norm(distance, sigma), prediction))
+
+        if update_ensemble_weighting:
+            self.ensemble_weights = np.multiply(self.ensemble_weights, [p[0] for p in predictions])
+            self.ensemble_weights /= np.linalg.norm(self.ensemble_weights)
+
+        return [(w, p[0], p[1]) for w, p in zip(self.ensemble_weights, predictions)]
+
+    def norm(self, dist, sigma):
+        return math.exp(-dist**2/(2*sigma))
+
+    #def feedback(self, ):
 
