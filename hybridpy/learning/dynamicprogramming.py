@@ -54,10 +54,10 @@ def compute(trip, controls, soc_states=50, gamma=1.0,
 
         for (i, soc) in enumerate(socs):
             # control is power supplied from the ICE, battery makes up the difference
-            costs_to_go = [cost_to_go(soc + battery.compute_delta_soc(soc, power_demand - control, duration)) for
+            costs_to_go = [cost_to_go(soc + battery.compute_delta_soc_and_current(soc, power_demand - control, duration)[0]) for
                            control in controls]
             q_function[t][i] = [
-                cost_function(vehicle.compute_fuel_rate(control), power_demand - control, duration) + (gamma * ctg) for
+                cost_function(vehicle.compute_fuel_rate(control, soc), power_demand - control, duration) + (gamma * ctg) for
                 ctg, control in zip(costs_to_go, controls)]
 
         value_function[t] = [np.nanmin(q) for q in q_function[t]]

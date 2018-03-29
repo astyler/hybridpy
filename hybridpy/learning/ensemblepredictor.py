@@ -50,7 +50,8 @@ class EnsemblePredictor(object):
 
         if update_ensemble_weighting:
             self.ensemble_weights = np.multiply(self.ensemble_weights, [p[0] for p in predictions])
-            self.ensemble_weights /= np.linalg.norm(self.ensemble_weights)
+        
+        self.ensemble_weights /= np.linalg.norm(self.ensemble_weights)
 
         return [(w, p[0], p[1]) for w, p in zip(self.ensemble_weights, predictions)]
 

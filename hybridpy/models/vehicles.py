@@ -1,5 +1,6 @@
 __author__ = 'astyler'
 import math
+from hybridpy.models.batteries import IdealBattery
 
 
 class Vehicle(object):
@@ -46,5 +47,17 @@ class Car(Vehicle):
         return power + offset
 
     # TODO: add in a real power -> fuel mapping
-    def compute_fuel_rate(self, power_demand):
-        return power_demand/10000.0
+    def compute_fuel_rate(self, power_out_W, soc_init=0):
+        return power_out_W/10000.0
+
+class ElectricCar(Car):
+    def __init__(self, battery=IdealBattery(), **kwargs):
+        super(ElectricCar, self).__init__(**kwargs)
+        self.battery = battery
+
+    def compute_fuel_rate(self, power_out_W, soc_init):
+        duration_s = 1.0
+        delta_soc, current = self.battery.compute_delta_soc_and_current(soc_init, power_out_W, duration_s)
+        return current
+
+
